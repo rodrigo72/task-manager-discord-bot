@@ -35,21 +35,57 @@ const getAllMembers = async () => {
     }
 }
 
+const generateTaskDescription = (task) => {
+    let description = '';
+
+    description += `Task ID: ${
+        task.taskId
+    }\n`;
+    description += `Name: **${
+        task.name
+    }**\n`;
+    description += `Begin Date: ${
+        task.beginDate.toDateString()
+    }\n`;
+    description += `End Date: ${
+        task.endDate.toDateString()
+    }\n`;
+    description += `Completion: ${
+        task.completionPercentage || 'N/A'
+    }%\n`;
+    description += `Assigned Team Members: ${
+        task.assignedTeamMembers.map(member => member.memberId).join(', ')
+    }\n`;
+    description += `Group: ${
+        task.taskGroup ? task.taskGroup.groupId : 'None'
+    }` + '\n\n';
+
+    return description;
+}
+
 const fetchAndDisplay = async (message, type, idOrAll, getAllFunction, EmbedBuilder) => {
-    
+
     const translationMap = new Map([
-        ["member", "Membros"],
-        ["task", "Tarefas"],
-        ["group", "Grupos"]
+        [
+            "member", "Membros"
+        ],
+        [
+            "task", "Tarefas"
+        ],
+        [
+            "group", "Grupos"
+        ]
     ]);
-    
+
     try {
         let entities;
         let title;
 
         if (idOrAll === 'all') {
             entities = await getAllFunction();
-            title = `${translationMap.get(type)}`;
+            title = `${
+                translationMap.get(type)
+            }`;
         } else {
             let model,
                 populateField;
@@ -94,27 +130,7 @@ const fetchAndDisplay = async (message, type, idOrAll, getAllFunction, EmbedBuil
         let description = '';
         entities.forEach(entity => {
             if (type === 'task') {
-                description += `**Task ID:** ${
-                    entity.taskId
-                }\n`;
-                description += `Name: **${
-                    entity.name
-                }**\n`;
-                description += `Begin Date: ${
-                    entity.beginDate.toDateString()
-                }\n`;
-                description += `End Date: ${
-                    entity.endDate.toDateString()
-                }\n`;
-                description += `Completion: ${
-                    entity.completionPercentage || 'N/A'
-                }%\n`;
-                description += `Assigned Team Members: ${
-                    entity.assignedTeamMembers.map(member => member.memberId).join(', ')
-                }\n`;
-                description += `Task Group: ${
-                    entity.taskGroup ? entity.taskGroup.groupId : 'None'
-                }` + '\n\n';
+                description += generateTaskDescription(entity);
             } else if (type === 'group') {
                 description += `**Group ID:** ${
                     entity.groupId
@@ -161,60 +177,39 @@ module.exports = {
         }
 
         switch (args[0]) {
-            case "my": 
+            case "my":
                 {
                     if (args[1] === "tasks" || args[2] === "tasks") {
                         try {
 
                             const discordId = message.author.id;
 
-                            let teamMember = await TeamMember.findOne({ discordId: discordId }).exec();
-                            if (!teamMember) {
+                            let teamMember = await TeamMember.findOne({discordId: discordId}).exec();
+                            if (! teamMember) {
                                 message.channel.send("Erro. Registo em falta.");
                                 return;
                             }
-                
-                            const tasks = await Task.find({ assignedTeamMembers: teamMember._id })
-                                .populate('assignedTeamMembers')
-                                .populate('taskGroup')
-                                .exec();
-                
+
+                            const tasks = await Task.find({assignedTeamMembers: teamMember._id}).populate('assignedTeamMembers').populate('taskGroup').exec();
+
                             if (tasks.length === 0) {
                                 message.channel.send("Não possui tarefas.");
                                 return;
                             }
-                                
+
                             let description = ' ';
                             tasks.forEach(task => {
 
                                 if ((args[1] === "tasks" && task.completionPercentage < 100) || (args[1] === "completed" && task.completionPercentage == 100)) {
-                                    description += `**Task ID:** ${
-                                        task.taskId
-                                    }\n`;
-                                    description += `Name: **${
-                                        task.name
-                                    }**\n`;
-                                    description += `Begin Date: ${
-                                        task.beginDate.toDateString()
-                                    }\n`;
-                                    description += `End Date: ${
-                                        task.endDate.toDateString()
-                                    }\n`;
-                                    description += `Completion: ${
-                                        task.completionPercentage || 'N/A'
-                                    }%\n`;
-                                    description += `Assigned Team Members: ${
-                                        task.assignedTeamMembers.map(member => member.memberId).join(', ')
-                                    }\n`;
-                                    description += `Group: ${
-                                        task.taskGroup ? task.taskGroup.groupId : 'None'
-                                    }` + '\n\n';
+                                    description += generateTaskDescription(task);
                                 }
 
                             });
-                
+
                             message.channel.send({
-                                embeds: [new EmbedBuilder().setColor('#404574').setTitle(`Tarefas - ${teamMember.name}`).setDescription(description).setTimestamp()]
+                                embeds: [new EmbedBuilder().setColor('#404574').setTitle(`Tarefas - ${
+                                        teamMember.name
+                                    }`).setDescription(description).setTimestamp()]
                             });
 
                         } catch (error) {
@@ -264,14 +259,47 @@ module.exports = {
                         return;
                     }
 
-                    let groupId = null;
-                    try {
-                        groupId = parseInt(args[1]);
-                        fetchAndDisplay(message, 'group', groupId, null, EmbedBuilder);
-                    } catch (error) {
-                        message.channel.send("ID inválido.");
-                        return;
+                    if (args.length > 2 && args[2] === "tasks") {
+
+                        const taskGroup = await TaskGroup.findOne({groupId: args[1]}).populate('tasks');
+
+                        if (! taskGroup) {
+                            message.channel.send(`O grupo ${
+                                args[1]
+                            } não existe.`);
+                            return;
+                        }
+
+                        let description = ' ';
+
+                        for (const task_object_id of taskGroup.tasks) {
+                            const task = await Task.findOne({_id: task_object_id}).populate('assignedTeamMembers').populate('taskGroup');
+
+                            if (! task) {
+                                continue;
+                            }
+
+                            description += generateTaskDescription(task);
+                        }
+
+                        message.channel.send({
+                            embeds: [new EmbedBuilder().setColor('#404574').setTitle(`Tarefas - Grupo ${
+                                    args[1]
+                                }`).setDescription(description).setTimestamp()]
+                        });
+
+                    } else {
+                        let groupId = null;
+                        try {
+                            groupId = parseInt(args[1]);
+                            fetchAndDisplay(message, 'group', groupId, null, EmbedBuilder);
+                        } catch (error) {
+                            message.channel.send("ID inválido.");
+                            return;
+                        }
                     }
+
+
                     break;
                 }
             case "member":

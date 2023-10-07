@@ -21,11 +21,9 @@ module.exports = {
         \`.add task <task_id> to group <group_id>\`
         Exemplo: \`.add task 1 to group 1\`
         
-        ## Associar uma tarefa a um ou mais elementos 
+        ### Associar uma tarefa a um ou mais elementos 
         \`.add task <task_id> to member <member_id>\` 
-        ou \`.add task <task_id> to member[<member_id_1>, <member_id_2>, ...]\`
-        Exemplos: \`.add task 1 to member 1\` ou \`.add task 1 to member [1,2,3]\` 
-        (sem espaços dentro da lista de números)
+        Exemplos: \`.add task 1 to member 1\`
         
         ### Adicionar um grupo 
         \`.add group "Group name"\`
