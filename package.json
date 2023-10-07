@@ -1,0 +1,24 @@
+{
+  "name": "task-manager-discord-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index",
+    "dev": "nodemon index"
+  },
+  "author": "rudrigu1",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "discord.js": "^14.13.0",
+    "dotenv": "^16.3.1",
+    "fs": "^0.0.1-security",
+    "mongodb": "^6.1.0",
+    "mongoose": "^7.5.4",
+    "mongoose-sequence": "^5.3.1",
+    "nodemon": "^3.0.1",
+    "path": "^0.12.7"
+  }
+}
