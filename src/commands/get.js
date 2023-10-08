@@ -51,7 +51,7 @@ const generateTaskDescription = (task) => {
         task.endDate.toDateString()
     }\n`;
     description += `Completion: ${
-        task.completionPercentage || 'N/A'
+        task.completionPercentage || '0'
     }%\n`;
     description += `Assigned Team Members: ${
         task.assignedTeamMembers.map(member => member.memberId).join(', ')

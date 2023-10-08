@@ -65,10 +65,14 @@ module.exports = {
                             }
                         case "completion":
                             {
-                                const completionPercentage = Number(args[3]);
-                                task.completionPercentage = completionPercentage;
-                                await task.save();
-                                message.channel.send(`Percentagem de conclusão da tarefa ${taskId} atualizada para ${completionPercentage}%.`);
+                                try {      
+                                    const completion = Number(args[3]);
+                                    task.completionPercentage = completion;
+                                    await task.save();
+                                    message.channel.send(`Percentagem de conclusão da tarefa ${taskId} atualizada para ${completion}%.`);
+                                } catch (error) {
+                                    message.channel.send("Percentagem inválida.");
+                                }
                                 break;
                             }
                         case "members":
